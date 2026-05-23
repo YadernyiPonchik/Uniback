@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { login } from '../actions/auth'
 
-const Login = ({ login }) => {
+const Login = ({ login, isAuthenticated }) => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -19,8 +19,9 @@ const Login = ({ login }) => {
         login(email, password);
     };
 
-    //
-    //
+    if (isAuthenticated) {
+        return <Navigate to='/' />
+    }
     return (
         <div className = 'container mt-5'>
             <h1>Sign In</h1>
@@ -61,8 +62,8 @@ const Login = ({ login }) => {
     );
 };
 
-// const mapStateToProps = state => ({
+const mapStateToProps = state => ({
+    isAuthenticated: state.auth.isAuthenticated
+}); 
 
-// }); 
-
-export default connect(null, { login })(Login);
+export default connect(mapStateToProps, { login })(Login);
