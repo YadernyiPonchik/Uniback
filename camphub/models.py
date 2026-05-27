@@ -12,11 +12,15 @@ class Cohort(models.Model):
     cohort_name = models.CharField(max_length=50)
 
 
-class Subject(models.Model):
+class Activity(models.Model):
     CLASS_CHOICES = [
         ('MATH', 'Math'),
         ('ENGLISH', 'English'),
         ('CALCULUS', 'Calculus'),
+        ('MALE', 'Male'),
+        ('FEMALE', 'Female'),
+        ('FACULTY', 'Faculty'),
+        ('CLEANING', 'Cleaning')
     ]
 
     name = models.CharField(
@@ -43,16 +47,19 @@ class Scheduleentry(models.Model):
     CLASS_TYPE = [
         ('LESSON', 'Lesson'),
         ('EXAM', 'Exam'),
-        ('MALE', 'Male')
-        ('FEMALE', 'Female'),
-        ('FACULTY', 'Faculty'),
+    ]
+
+    DAYS_OF_WEEK = [
+        ('MON', 'Monday'),
+        ('TUE', 'Tuesday'),
     ]
 
     cohort = models.ForeignKey(
         Cohort, on_delete=models.CASCADE, null=True, blank=True)
-    subject = models.ForeignKey(
-        Subject, on_delete=models.CASCADE,  null=True, blank=True)
-    entry_date = models.DateField()
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE,  null=True, blank=True)
+    entry_date = models.DateField(null=True, blank=True)
+    day= models.CharField(max_length=10, choices=DAYS_OF_WEEK, null=True, blank=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
     entry_type = models.CharField(
@@ -61,9 +68,9 @@ class Scheduleentry(models.Model):
     rooms = models.ManyToManyField(Room, blank=True)
 
 
-class EntryInstructors(models.Model):
-    entry = models.ForeignKey(Scheduleentry, on_delete=models.CASCADE)
-    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
+# class EntryInstructors(models.Model):
+#     entry = models.ForeignKey(Scheduleentry, on_delete=models.CASCADE)
+#     instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
 
 
 class Entryrooms(models.Model):
