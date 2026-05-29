@@ -2,3 +2,9 @@ backend/.venv/
 backend/__pycache__/
 backend/*.pyc
 backend/.env
+.venv
+.postman
+postman
+frontend/.env
+Auth
+
