@@ -53,9 +53,6 @@ const Login = ({ login, isAuthenticated }) => {
                 <button className = 'btn btn-primary' type = 'submit'>Login</button>
             </form>
             <p className = 'mt-3'>
-                Don't have an account? <Link to='/signup'>Sign Up</Link>
-            </p>
-            <p className = 'mt-3'>
                 Forgot your password <Link to='/reset-password'>Reset Password</Link>
             </p>
         </div>
