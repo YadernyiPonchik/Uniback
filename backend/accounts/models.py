@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, UserManager
-
+from camphub.models import Cohort
 
 class UserAccountManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -22,7 +22,7 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-
+    cohort = models.ForeignKey(Cohort, on_delete=models.SET_NULL, null=True)
     objects = UserAccountManager()
 
     USERNAME_FIELD = 'email'
