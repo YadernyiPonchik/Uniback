@@ -1,0 +1,6 @@
+.venv
+.postman
+postman
+/frontend/.env
+Auth
+/backend/.env
