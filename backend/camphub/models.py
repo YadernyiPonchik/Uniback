@@ -117,3 +117,26 @@ class Contact(models.Model):
 #     MEAL_CHOICES= [
 
 #     ]
+
+from django.conf import settings
+
+class TVBooking(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    lounge_name = models.CharField(max_length=50)
+    booker_name = models.CharField(max_length=100)
+    booking_date = models.CharField(max_length=10)
+    booking_time = models.CharField(max_length=5)
+    
+    def __str__(self):
+        return f"{self.booker_name} - {self.lounge_name} ({self.booking_date} {self.booking_time})"
+
+class Reminder(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    reminder_type = models.CharField(max_length=20)  # "lesson", "gym", "bubble", "tv"
+    subject_name = models.CharField(max_length=100)
+    day = models.CharField(max_length=15)
+    event_time_str = models.CharField(max_length=10)
+    reminder_offset = models.IntegerField()
+    
+    def __str__(self):
+        return f"{self.user} - {self.reminder_type} - {self.subject_name}"
