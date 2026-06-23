@@ -1,0 +1,13 @@
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
+def get_main_menu() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🗓 Lessons"), KeyboardButton(text="🏋️ Sports & Gym")],
+            [KeyboardButton(text="📺 TV Lounges"), KeyboardButton(text="📞 Contacts")],
+            [KeyboardButton(text="📅 My Day")]
+        ],
+        resize_keyboard=True,
+        is_persistent=True
+    )
+

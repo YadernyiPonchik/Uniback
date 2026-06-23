@@ -1,10 +1,17 @@
 from django.urls import re_path
 from django.views.generic import TemplateView
 from django.urls import path, include
+from camphub import views
+from rest_framework.routers import DefaultRouter
+from django.contrib import admin
+router = DefaultRouter()
+router.register(r'schedule-entries', views.ScheduleEntryViewSet)
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
+    path('api/', include(router.urls)),
 ]
 
 urlpatterns += [re_path(r'^.*', TemplateView.as_view(template_name='index.html'))]
