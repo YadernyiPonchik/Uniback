@@ -70,11 +70,16 @@ class Scheduleentry(models.Model):
         Cohort, on_delete=models.CASCADE, null=True, blank=True)
     activity = models.ForeignKey(
         Activity, on_delete=models.CASCADE,  null=True, blank=True)
+    # 
     entry_date = models.DateField(null=True, blank=True)
+    
     day = models.CharField(max_length=10, choices=DAYS_OF_WEEK,
                         default='MON')
+                        # 
     start_time = models.TimeField()
     end_time = models.TimeField()
+
+
     entry_type = models.CharField(
         max_length=20, choices=CLASS_TYPE, null=True, blank=True)
     instructors = models.ManyToManyField(Instructor, blank=True)
