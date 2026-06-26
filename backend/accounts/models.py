@@ -39,7 +39,8 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
                             null=True,   blank=True)
     telegram_id = models.BigIntegerField(unique=True, null=True, blank=True)
 
-    cohort = models.ForeignKey(Cohort, on_delete=models.SET_NULL, null=True)
+    cohort = models.ForeignKey(
+        Cohort, on_delete=models.SET_NULL, null=True, blank=True)
     objects = UserAccountManager()
 
     USERNAME_FIELD = 'email'

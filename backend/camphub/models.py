@@ -1,16 +1,75 @@
 from django.db import models
 
 # Create your models here.
-
+#  new section
+class Room(models.Model):
+    room_number = models.CharField(max_length=15)
 
 class StudyYear(models.Model):
     year_name = models.CharField(max_length=50)
 
 
+class Subject(models.Model):
+    name = models.CharField(max_length=50)
+
 class Cohort(models.Model):
     study_year = models.ForeignKey(StudyYear, on_delete=models.CASCADE)
     cohort_name = models.CharField(max_length=50)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
 
+class Event(models.Model):
+    CHOICES = [
+        ('GYM', 'Gym'),
+        ('CLASS', 'Class'),
+        ('BUBBLE', 'Bubble'),
+        ('MEAL_TIME', 'Meal_Time'),
+    ]
+    DAYS = [
+        ('MON', 'Monday'), ('TUE', 'Tuesday'), ('WED', 'Wednesday'),
+        ('THU', 'Thursday'), ('FRI', 'Friday'), ('SAT', 'Saturday'), ('SUN', 'Sunday')
+    ]
+    day = models.CharField(max_length=3, choices=DAYS, default='MON')
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    status = models.CharField(
+        
+        max_length=50, choices=CHOICES, default='GYM')
+
+
+class GymEvent(Event):
+    CHOICES = [
+        ('MALE', 'Male'),
+        ('FEMALE', 'Female'),
+        
+    ]
+    gender = models.CharField(
+        max_length=50, choices=CHOICES, default='MALE')
+
+
+
+class Instructor(models.Model):
+    STATUS_TYPE = [
+        ('ON_CAMPUS', 'on_campus'),
+        ('OFF_CAMPUS', 'off_campus'),
+    ]
+
+    first_name = models.CharField(max_length=15)
+    last_name = models.CharField(max_length=15)
+    status = models.CharField(
+        max_length=20, choices=STATUS_TYPE, default='ON_CAMPUS')
+
+class ClassEvent(Event):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    instructor= models.ForeignKey(Instructor, on_delete=models.CASCADE)
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+
+class MealTime(Event):
+    meal_name = models.CharField(max_length=50)
+
+
+
+
+# end of new section
 
 class Activity(models.Model):
     CLASS_CHOICES = [
@@ -34,20 +93,8 @@ class Activity(models.Model):
         max_length=50, choices=CLASS_CHOICES, default='MATH')
 
 
-class Instructor(models.Model):
-    STATUS_TYPE = [
-        ('ON_CAMPUS', 'on_campus'),
-        ('OFF_CAMPUS', 'off_campus'),
-    ]
-
-    firstname = models.CharField(max_length=15)
-    lastname = models.CharField(max_length=15)
-    status = models.CharField(
-        max_length=20, choices=STATUS_TYPE, default='ON_CAMPUS')
 
 
-class Room(models.Model):
-    room_number = models.CharField(max_length=15)
 
 
 class Scheduleentry(models.Model):
@@ -70,11 +117,16 @@ class Scheduleentry(models.Model):
         Cohort, on_delete=models.CASCADE, null=True, blank=True)
     activity = models.ForeignKey(
         Activity, on_delete=models.CASCADE,  null=True, blank=True)
+    # 
     entry_date = models.DateField(null=True, blank=True)
+    
     day = models.CharField(max_length=10, choices=DAYS_OF_WEEK,
                         default='MON')
+                        # 
     start_time = models.TimeField()
     end_time = models.TimeField()
+
+
     entry_type = models.CharField(
         max_length=20, choices=CLASS_TYPE, null=True, blank=True)
     instructors = models.ManyToManyField(Instructor, blank=True)
