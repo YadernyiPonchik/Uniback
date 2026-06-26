@@ -105,6 +105,16 @@ def update_user_level(telegram_id: int, level: str):
     except UserAccount.DoesNotExist:
         return None
 
+@sync_to_async
+def update_user_gender(telegram_id: int, gender: str):
+    try:
+        u = UserAccount.objects.get(telegram_id=telegram_id)
+        u.gender = gender.upper()
+        u.save()
+        return u
+    except UserAccount.DoesNotExist:
+        return None
+
 # --- Lessons CRUD ---
 @sync_to_async
 def get_lessons_for_day(level: str, day: str):

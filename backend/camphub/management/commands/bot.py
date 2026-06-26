@@ -16,6 +16,7 @@ from camphub.bot.handlers.tv_lounges import router as tv_router
 from camphub.bot.handlers.contacts import router as contacts_router
 from camphub.bot.handlers.my_day import router as my_day_router
 from camphub.bot.handlers.admin import router as admin_router
+from camphub.bot.handlers.settings import router as settings_router
 from camphub.bot.scheduler.reminders import setup_scheduler
 
 load_dotenv()
@@ -51,6 +52,7 @@ class Command(BaseCommand):
         dp.include_router(contacts_router)
         dp.include_router(my_day_router)
         dp.include_router(admin_router)
+        dp.include_router(settings_router)
 
         # Setup and start background scheduler
         scheduler = setup_scheduler(bot)

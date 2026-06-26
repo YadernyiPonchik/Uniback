@@ -86,11 +86,9 @@ class Scheduleentry(models.Model):
 #     instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
 
 
-class Reminder(models.Model):
-    user = models.ForeignKey('accounts.UserAccount', on_delete=models.CASCADE)
-    entry = models.ForeignKey('Scheduleentry', on_delete=models.CASCADE)
-    minutes_before = models.IntegerField(default=15)
-
+class Entryrooms(models.Model):
+    entry = models.ForeignKey(Scheduleentry, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
 
 class Contact(models.Model):
     CATEGORY_CHOICES = [
