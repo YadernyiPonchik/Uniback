@@ -97,45 +97,7 @@ class Activity(models.Model):
 
 
 
-class Scheduleentry(models.Model):
-    CLASS_TYPE = [
-        ('LESSON', 'Lesson'),
-        ('EXAM', 'Exam'),
-    ]
 
-    DAYS_OF_WEEK = [
-        ('MON', 'Monday'),
-        ('TUE', 'Tuesday'),
-        ('WED', 'Wednesday'),
-        ('THU', 'Thursday'),
-        ('FRI', 'Friday'),
-        ('SAT', 'Saturday'),
-        ('SUN', 'Sunday'),
-    ]
-
-    cohort = models.ForeignKey(
-        Cohort, on_delete=models.CASCADE, null=True, blank=True)
-    activity = models.ForeignKey(
-        Activity, on_delete=models.CASCADE,  null=True, blank=True)
-    # 
-    entry_date = models.DateField(null=True, blank=True)
-    
-    day = models.CharField(max_length=10, choices=DAYS_OF_WEEK,
-                        default='MON')
-                        # 
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-
-
-    entry_type = models.CharField(
-        max_length=20, choices=CLASS_TYPE, null=True, blank=True)
-    instructors = models.ManyToManyField(Instructor, blank=True)
-    rooms = models.ManyToManyField(Room, blank=True)
-
-
-# class EntryInstructors(models.Model):
-#     entry = models.ForeignKey(Scheduleentry, on_delete=models.CASCADE)
-#     instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
 
 
 class Reminder(models.Model):
@@ -173,7 +135,6 @@ class Contact(models.Model):
 #     ]
 
 from django.conf import settings
-
 class TVBooking(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     lounge_name = models.CharField(max_length=50)
@@ -183,6 +144,9 @@ class TVBooking(models.Model):
     
     def __str__(self):
         return f"{self.booker_name} - {self.lounge_name} ({self.booking_date} {self.booking_time})"
+
+
+
 
 class Reminder(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
