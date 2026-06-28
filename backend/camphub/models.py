@@ -71,39 +71,6 @@ class MealTime(Event):
 
 # end of new section
 
-class Activity(models.Model):
-    CLASS_CHOICES = [
-        ('MATH', 'Math'),
-        ('ENGLISH', 'English'),
-        ('CALCULUS', 'Calculus'),
-        ('MALE', 'Male'),
-        ('FEMALE', 'Female'),
-        ('FACULTY', 'Faculty'),
-        ('CLEANING', 'Cleaning'),
-        ('CLEANING & DISINFECTION', 'Cleaning & Disinfection'),
-        ('ALTAI-NARYN FOOTBALL SCHOOL', 'Altai-Naryn Football School'),
-        ('JUDO GRAPPLING', 'Judo Grappling'),
-        ('MCHS', 'MCHS'),
-        ('PHYSICAL EDUCATION', 'Physical Education'),
-        ('VOLLEYBALL', 'Volleyball'),
-    ]
-
-
-    name = models.CharField(
-        max_length=50, choices=CLASS_CHOICES, default='MATH')
-
-
-
-
-
-
-
-
-
-class Reminder(models.Model):
-    user = models.ForeignKey('accounts.UserAccount', on_delete=models.CASCADE)
-    entry = models.ForeignKey('Scheduleentry', on_delete=models.CASCADE)
-    minutes_before = models.IntegerField(default=15)
 
 
 class Contact(models.Model):
