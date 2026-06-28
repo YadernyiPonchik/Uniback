@@ -15,7 +15,7 @@ class Subject(models.Model):
 class Cohort(models.Model):
     study_year = models.ForeignKey(StudyYear, on_delete=models.CASCADE)
     cohort_name = models.CharField(max_length=50)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, null=True, blank=True)
 
 class Event(models.Model):
     CHOICES = [

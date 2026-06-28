@@ -8,7 +8,6 @@ import re
 
 from ..keyboards.inline import get_lessons_submenu_kb, get_days_kb, get_reminder_toggle_kb, get_reminder_offsets_kb, get_edit_lessons_kb
 from ..crud import get_user, get_lessons_for_day, get_weekly_lessons, add_reminder, delete_reminder, get_user_reminders, add_lesson, remove_lesson
-from camphub.models import Scheduleentry
 
 router = Router()
 
@@ -106,18 +105,19 @@ async def lesson_reminder_toggle(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("lr_tog_"))
 async def process_reminder_toggle(callback: CallbackQuery):
     from asgiref.sync import sync_to_async
+    from camphub.models import ClassEvent
     parts = callback.data.split("_")
     lesson_id = int(parts[2])
     action = parts[3]
 
-    get_entry = sync_to_async(lambda: Scheduleentry.objects.select_related('activity', 'cohort').get(id=lesson_id))
+    get_entry = sync_to_async(lambda: ClassEvent.objects.select_related('subject', 'cohort').get(id=lesson_id))
     try:
         entry = await get_entry()
-    except Scheduleentry.DoesNotExist:
+    except ClassEvent.DoesNotExist:
         await callback.answer("Lesson not found.")
         return
 
-    subject_name = entry.activity.name.title() if entry.activity else "Unknown"
+    subject_name = entry.subject.name.title() if entry.subject else "Unknown"
     day_map = {"MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday", "THU": "Thursday", "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday"}
     day = day_map.get(entry.day, entry.day)
     time_str = entry.start_time.strftime("%H:%M") if entry.start_time else "09:00"
@@ -134,17 +134,18 @@ async def process_reminder_toggle(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("lr_off_"))
 async def save_lesson_reminder(callback: CallbackQuery):
     from asgiref.sync import sync_to_async
+    from camphub.models import ClassEvent
     parts = callback.data.split("_")
     lesson_id = int(parts[2])
     offset = int(parts[3])
 
-    get_entry = sync_to_async(lambda: Scheduleentry.objects.select_related('activity').get(id=lesson_id))
+    get_entry = sync_to_async(lambda: ClassEvent.objects.select_related('subject').get(id=lesson_id))
     try:
         entry = await get_entry()
-    except Scheduleentry.DoesNotExist:
+    except ClassEvent.DoesNotExist:
         return
 
-    subject_name = entry.activity.name.title() if entry.activity else "Unknown"
+    subject_name = entry.subject.name.title() if entry.subject else "Unknown"
     day_map = {"MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday", "THU": "Thursday", "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday"}
     day = day_map.get(entry.day, entry.day)
     time_str = entry.start_time.strftime("%H:%M") if entry.start_time else "09:00"

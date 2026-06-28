@@ -1,7 +1,10 @@
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from accounts.models import UserAccount
-from camphub.models import Cohort, Activity, Scheduleentry, Contact, TVBooking, Reminder, StudyYear
+from camphub.models import (
+    Cohort, Subject, ClassEvent, GymEvent, Event,
+    Instructor, Contact, TVBooking, Reminder, StudyYear
+)
 from datetime import datetime, time, timedelta
 
 day_mapping = {
@@ -10,28 +13,33 @@ day_mapping = {
     "MON": "MON", "TUE": "TUE", "WED": "WED", "THU": "THU", "FRI": "FRI", "SAT": "SAT", "SUN": "SUN"
 }
 
+day_reverse = {
+    "MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday", "THU": "Thursday",
+    "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday"
+}
+
 # Compatibility wrappers to mimic SQLAlchemy model objects
 class LessonWrapper:
     def __init__(self, entry):
         self.id = entry.id
         self.academic_level = entry.cohort.cohort_name if entry.cohort else ""
-        self.day_of_week = next((k for k, v in day_mapping.items() if v == entry.day), entry.day)
+        self.day_of_week = day_reverse.get(entry.day, entry.day)
         self.time_str = entry.start_time.strftime("%H:%M") if entry.start_time else "09:00"
-        self.subject_name = entry.activity.name.title() if entry.activity else ""
+        self.subject_name = entry.subject.name.title() if entry.subject else ""
 
 class GymSlotWrapper:
     def __init__(self, entry):
         self.id = entry.id
-        self.day_of_week = next((k for k, v in day_mapping.items() if v == entry.day), entry.day)
+        self.day_of_week = day_reverse.get(entry.day, entry.day)
         self.start_time_str = entry.start_time.strftime("%H:%M") if entry.start_time else ""
         self.end_time_str = entry.end_time.strftime("%H:%M") if entry.end_time else ""
-        self.session_type = entry.activity.name.title() if entry.activity else ""
+        self.session_type = entry.gender.title() if entry.gender else ""
 
 class BubbleWrapper:
     def __init__(self, entry):
         self.id = entry.id
-        self.day_of_week = next((k for k, v in day_mapping.items() if v == entry.day), entry.day)
-        self.sport_name = entry.activity.name.title() if entry.activity else ""
+        self.day_of_week = day_reverse.get(entry.day, entry.day)
+        self.sport_name = entry.status.replace("_", " ").title() if entry.status else ""
         self.time_str = f"{entry.start_time.strftime('%H:%M')} – {entry.end_time.strftime('%H:%M')}"
 
 class ContactWrapper:
@@ -105,89 +113,128 @@ def update_user_level(telegram_id: int, level: str):
     except UserAccount.DoesNotExist:
         return None
 
-# --- Lessons CRUD ---
+@sync_to_async
+def update_user_gender(telegram_id: int, gender: str):
+    try:
+        u = UserAccount.objects.get(telegram_id=telegram_id)
+        u.gender = gender.upper()
+        u.save()
+        return u
+    except UserAccount.DoesNotExist:
+        return None
+
+# --- Lessons CRUD (now uses ClassEvent) ---
 @sync_to_async
 def get_lessons_for_day(level: str, day: str):
     day_code = day_mapping.get(day, day)
-    entries = Scheduleentry.objects.filter(
+    entries = ClassEvent.objects.filter(
         cohort__cohort_name=level,
         day=day_code,
-        entry_type="LESSON"
-    ).select_related('cohort', 'activity').order_by('start_time')
+    ).select_related('cohort', 'subject').order_by('start_time')
     return [LessonWrapper(e) for e in entries]
 
 @sync_to_async
 def get_weekly_lessons(level: str):
-    entries = Scheduleentry.objects.filter(
+    entries = ClassEvent.objects.filter(
         cohort__cohort_name=level,
-        entry_type="LESSON"
-    ).select_related('cohort', 'activity').order_by('day', 'start_time')
+    ).select_related('cohort', 'subject').order_by('day', 'start_time')
     return [LessonWrapper(e) for e in entries]
 
 @sync_to_async
 def add_lesson(level: str, day: str, time_str: str, subject_name: str):
     study_year, _ = StudyYear.objects.get_or_create(year_name="2025-2026")
     cohort, _ = Cohort.objects.get_or_create(study_year=study_year, cohort_name=level)
-    activity, _ = Activity.objects.get_or_create(name=subject_name.upper()[:50])
+    subject, _ = Subject.objects.get_or_create(name=subject_name.title()[:50])
+    instructor, _ = Instructor.objects.get_or_create(
+        first_name="TBD", last_name="TBD",
+        defaults={"status": "ON_CAMPUS"}
+    )
     
     day_code = day_mapping.get(day, "MON")
     start_time = parse_time_str(time_str)
     start_dt = datetime.combine(datetime.today(), start_time)
     end_time = (start_dt + timedelta(hours=1, minutes=30)).time()
     
-    entry, _ = Scheduleentry.objects.get_or_create(
+    entry, _ = ClassEvent.objects.get_or_create(
         cohort=cohort,
-        activity=activity,
+        subject=subject,
+        instructor=instructor,
         day=day_code,
         start_time=start_time,
         end_time=end_time,
-        entry_type="LESSON"
+        defaults={"status": "CLASS"}
     )
     return LessonWrapper(entry)
 
 @sync_to_async
 def remove_lesson(lesson_id: int):
-    Scheduleentry.objects.filter(id=lesson_id).delete()
+    ClassEvent.objects.filter(id=lesson_id).delete()
 
-# --- Gym Slots CRUD ---
+# --- Gym Slots CRUD (now uses GymEvent) ---
 @sync_to_async
 def get_gym_slots_for_day(day: str):
     day_code = day_mapping.get(day, day)
-    entries = Scheduleentry.objects.filter(
-        cohort__isnull=True,
+    entries = GymEvent.objects.filter(
         day=day_code,
-        activity__name__in=['MALE', 'FEMALE', 'FACULTY', 'CLEANING', 'FACULTY / OPS']
-    ).select_related('activity').order_by('start_time')
+    ).order_by('start_time')
     return [GymSlotWrapper(e) for e in entries]
 
 @sync_to_async
 def get_all_gym_slots():
-    entries = Scheduleentry.objects.filter(
-        cohort__isnull=True,
-        activity__name__in=['MALE', 'FEMALE', 'FACULTY', 'CLEANING', 'FACULTY / OPS']
-    ).select_related('activity').order_by('day', 'start_time')
+    entries = GymEvent.objects.all().order_by('day', 'start_time')
     return [GymSlotWrapper(e) for e in entries]
 
-# --- Bubble Sports CRUD ---
+@sync_to_async
+def add_gym_slot(day: str, start_str: str, end_str: str, session_type: str = "MALE"):
+    day_code = day_mapping.get(day, "MON")
+    start_time = parse_time_str(start_str)
+    end_time = parse_time_str(end_str)
+    
+    entry = GymEvent.objects.create(
+        day=day_code,
+        start_time=start_time,
+        end_time=end_time,
+        status="GYM",
+        gender=session_type.upper()
+    )
+    return entry
+
+# --- Bubble Sports CRUD (now uses Event with status=BUBBLE) ---
 @sync_to_async
 def get_bubble_sports_for_day(day: str):
     day_code = day_mapping.get(day, day)
-    entries = Scheduleentry.objects.filter(
-        cohort__isnull=True,
-        day=day_code
-    ).exclude(
-        activity__name__in=['MALE', 'FEMALE', 'FACULTY', 'CLEANING', 'FACULTY / OPS']
-    ).select_related('activity').order_by('start_time')
+    entries = Event.objects.filter(
+        day=day_code,
+        status="BUBBLE",
+    ).order_by('start_time')
+    # Exclude GymEvent subclass entries
+    entries = [e for e in entries if not hasattr(e, 'gymevent')]
     return [BubbleWrapper(e) for e in entries]
 
 @sync_to_async
 def get_all_bubble_sports():
-    entries = Scheduleentry.objects.filter(
-        cohort__isnull=True
-    ).exclude(
-        activity__name__in=['MALE', 'FEMALE', 'FACULTY', 'CLEANING', 'FACULTY / OPS']
-    ).select_related('activity').order_by('day', 'start_time')
+    entries = Event.objects.filter(
+        status="BUBBLE",
+    ).order_by('day', 'start_time')
+    entries = [e for e in entries if not hasattr(e, 'gymevent')]
     return [BubbleWrapper(e) for e in entries]
+
+@sync_to_async
+def add_bubble_sport(day: str, sport: str, time_range_str: str):
+    import re
+    day_code = day_mapping.get(day, "MON")
+    
+    parts = re.split(r'[–-]', time_range_str)
+    start_time = parse_time_str(parts[0].strip())
+    end_time = parse_time_str(parts[1].strip()) if len(parts) > 1 else start_time
+    
+    entry = Event.objects.create(
+        day=day_code,
+        start_time=start_time,
+        end_time=end_time,
+        status="BUBBLE"
+    )
+    return entry
 
 # --- Contacts CRUD ---
 @sync_to_async
@@ -282,38 +329,3 @@ def delete_reminder(user_id: int, r_type: str, subject: str, day: str, time_str:
         day=day,
         event_time_str=time_str
     ).delete()
-
-@sync_to_async
-def add_gym_slot(day: str, start_str: str, end_str: str, session_type: str = "MALE"):
-    activity, _ = Activity.objects.get_or_create(name=session_type.upper()[:50])
-    day_code = day_mapping.get(day, "MON")
-    start_time = parse_time_str(start_str)
-    end_time = parse_time_str(end_str)
-    
-    entry = Scheduleentry.objects.create(
-        activity=activity,
-        day=day_code,
-        start_time=start_time,
-        end_time=end_time,
-        entry_type="LESSON"
-    )
-    return entry
-
-@sync_to_async
-def add_bubble_sport(day: str, sport: str, time_range_str: str):
-    import re
-    activity, _ = Activity.objects.get_or_create(name=sport.upper()[:50])
-    day_code = day_mapping.get(day, "MON")
-    
-    parts = re.split(r'[–-]', time_range_str)
-    start_time = parse_time_str(parts[0].strip())
-    end_time = parse_time_str(parts[1].strip()) if len(parts) > 1 else start_time
-    
-    entry = Scheduleentry.objects.create(
-        activity=activity,
-        day=day_code,
-        start_time=start_time,
-        end_time=end_time,
-        entry_type="LESSON"
-    )
-    return entry

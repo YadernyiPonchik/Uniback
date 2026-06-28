@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0006_personalreminder'),
-        ('camphub', '0003_delete_entryrooms'),
+        ('camphub', '0002_reminder_tvbooking'),
     ]
 
     operations = [

@@ -1,14 +1,25 @@
+import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram import Bot
 from ..crud import get_all_reminders
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 async def check_reminders(bot: Bot):
     now = datetime.now()
     current_day = now.strftime("%A")
     current_date = now.strftime("%d.%m")
     
+    logger.info(f"Checking reminders at {now.strftime('%H:%M')} on {current_day} ({current_date})")
+    
     reminders = await get_all_reminders()
+    
+    if not reminders:
+        logger.info("No reminders found in database.")
+        return
+    
+    logger.info(f"Found {len(reminders)} total reminder(s) in database.")
     
     for r in reminders:
         # Lesson/Gym/Bubble reminders check the weekday name
@@ -25,20 +36,47 @@ async def check_reminders(bot: Bot):
             event_datetime = datetime.combine(now.date(), event_time)
             trigger_time = event_datetime - timedelta(minutes=r.reminder_offset)
             
+            logger.info(
+                f"  Reminder [{r.reminder_type}] '{r.subject_name}' on {r.day}: "
+                f"event at {r.event_time_str}, trigger at {trigger_time.strftime('%H:%M')}, "
+                f"now is {now.strftime('%H:%M')}"
+            )
+            
             # Check if it is the exact minute
             if trigger_time.hour == now.hour and trigger_time.minute == now.minute:
                 if r.reminder_type == "lesson":
-                    msg = f"📚 {r.subject_name} starts in {r.reminder_offset} minutes."
+                    msg = (
+                        f"📚 <b>Lesson Reminder!</b>\n\n"
+                        f"📖 <b>{r.subject_name}</b> starts in <b>{r.reminder_offset} minutes</b>!\n"
+                        f"⏰ Class time: {r.event_time_str}\n\n"
+                        f"Get ready! 🎒"
+                    )
                 elif r.reminder_type == "gym":
-                    msg = f"🏋️ Gym session starts in {r.reminder_offset} minutes."
+                    msg = (
+                        f"🏋️ <b>Gym Reminder!</b>\n\n"
+                        f"💪 <b>{r.subject_name}</b> session starts in <b>{r.reminder_offset} minutes</b>!\n"
+                        f"⏰ Session time: {r.event_time_str}\n\n"
+                        f"Time to work out! 🔥"
+                    )
                 elif r.reminder_type == "bubble":
-                    msg = f"🏀 {r.subject_name} starts in {r.reminder_offset} minutes."
+                    msg = (
+                        f"🏀 <b>Sports Bubble Reminder!</b>\n\n"
+                        f"⚽ <b>{r.subject_name}</b> starts in <b>{r.reminder_offset} minutes</b>!\n"
+                        f"⏰ Session time: {r.event_time_str}\n\n"
+                        f"Get your gear ready! 🏃"
+                    )
                 else:
-                    msg = f"📺 Your Lounge {r.subject_name} booking starts in {r.reminder_offset} minutes."
+                    msg = (
+                        f"📺 <b>TV Lounge Reminder!</b>\n\n"
+                        f"🎬 Your booking at <b>{r.subject_name}</b> starts in <b>{r.reminder_offset} minutes</b>!\n"
+                        f"⏰ Booking time: {r.event_time_str}\n\n"
+                        f"Enjoy! 🍿"
+                    )
                     
-                await bot.send_message(r.telegram_user_id, msg)
+                logger.info(f"  >>> SENDING reminder to user {r.telegram_user_id}: {r.subject_name}")
+                await bot.send_message(r.telegram_user_id, msg, parse_mode="HTML")
         except Exception as e:
-            print(f"Error processing reminder {r.id}: {e}")
+            logger.error(f"Error processing reminder {r.id}: {e}")
 
 def setup_scheduler(bot: Bot):
     scheduler = AsyncIOScheduler()

@@ -40,6 +40,7 @@ BUBBLE_EMOJI = {
     "Football": "⚽",
     "Tennis": "🎾",
     "Mep & Kitchen": "🍽️",
+    "Bubble": "🏟️",
 }
 
 GYM_LEGEND = (
@@ -381,23 +382,26 @@ async def sports_reminder_toggle(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("spr_tog_"))
 async def process_sports_reminder_toggle(callback: CallbackQuery):
     from asgiref.sync import sync_to_async
-    from camphub.models import Scheduleentry
+    from camphub.models import GymEvent, Event
     parts = callback.data.split("_")
     rtype = parts[2]
     event_id = int(parts[3])
     action = parts[4]
 
-    get_entry = sync_to_async(lambda: Scheduleentry.objects.select_related('activity').get(id=event_id))
-    entry = await get_entry()
     day_map = {"MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday", "THU": "Thursday", "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday"}
-    day = day_map.get(entry.day, entry.day)
 
     if rtype == "gym":
+        get_entry = sync_to_async(lambda: GymEvent.objects.get(id=event_id))
+        entry = await get_entry()
         subject_name = "Gym Session"
         time_str = entry.start_time.strftime("%H:%M")
     else:
-        subject_name = entry.activity.name.title() if entry.activity else "Sport"
+        get_entry = sync_to_async(lambda: Event.objects.get(id=event_id))
+        entry = await get_entry()
+        subject_name = entry.status.replace("_", " ").title() if entry.status else "Sport"
         time_str = entry.start_time.strftime("%H:%M")
+
+    day = day_map.get(entry.day, entry.day)
 
     if action == "off":
         await delete_reminder(callback.from_user.id, rtype, subject_name, day, time_str)
@@ -411,23 +415,26 @@ async def process_sports_reminder_toggle(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("spr_off_"))
 async def save_sports_reminder(callback: CallbackQuery):
     from asgiref.sync import sync_to_async
-    from camphub.models import Scheduleentry
+    from camphub.models import GymEvent, Event
     parts = callback.data.split("_")
     rtype = parts[2]
     event_id = int(parts[3])
     offset = int(parts[4])
 
-    get_entry = sync_to_async(lambda: Scheduleentry.objects.select_related('activity').get(id=event_id))
-    entry = await get_entry()
     day_map = {"MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday", "THU": "Thursday", "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday"}
-    day = day_map.get(entry.day, entry.day)
 
     if rtype == "gym":
+        get_entry = sync_to_async(lambda: GymEvent.objects.get(id=event_id))
+        entry = await get_entry()
         subject_name = "Gym Session"
         time_str = entry.start_time.strftime("%H:%M")
     else:
-        subject_name = entry.activity.name.title() if entry.activity else "Sport"
+        get_entry = sync_to_async(lambda: Event.objects.get(id=event_id))
+        entry = await get_entry()
+        subject_name = entry.status.replace("_", " ").title() if entry.status else "Sport"
         time_str = entry.start_time.strftime("%H:%M")
+
+    day = day_map.get(entry.day, entry.day)
 
     await add_reminder(callback.from_user.id, rtype, subject_name, day, time_str, offset)
     await callback.message.edit_text(f"Reminder set for {subject_name} {offset} minutes before.")
