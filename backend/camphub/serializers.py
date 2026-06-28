@@ -1,8 +1,7 @@
 from rest_framework import serializers
-from .models import Scheduleentry
+from .models import Event
 
-
-class ScheduleEntrySerializer(serializers.ModelSerializer):
+class EventSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Scheduleentry
+        model = Event
         fields = '__all__'

@@ -2,7 +2,7 @@ import sqlite3
 import re
 from datetime import datetime, time, timedelta
 from django.core.management.base import BaseCommand
-from camphub.models import StudyYear, Cohort, Activity, Scheduleentry, Contact
+from camphub.models import StudyYear, Cohort, Subject, Instructor, ClassEvent, GymEvent, Event, Contact
 
 class Command(BaseCommand):
     help = "Seeds the Django database with lessons, gym, and sports data from the bot's SQLite database"
@@ -54,9 +54,14 @@ class Command(BaseCommand):
                 cohort_name=level
             )
             
-            # Map activity
-            activity_name = subject.upper()
-            activity, _ = Activity.objects.get_or_create(name=activity_name[:50]) # limit to max_length
+            # Map subject
+            subj, _ = Subject.objects.get_or_create(name=subject.title()[:50])
+            
+            # Get or create placeholder instructor
+            instructor, _ = Instructor.objects.get_or_create(
+                first_name="TBD", last_name="TBD",
+                defaults={"status": "ON_CAMPUS"}
+            )
             
             day_code = day_mapping.get(day_name, "MON")
             start_time = parse_time(time_str)
@@ -65,14 +70,15 @@ class Command(BaseCommand):
             start_dt = datetime.combine(datetime.today(), start_time)
             end_time = (start_dt + timedelta(hours=1, minutes=30)).time()
             
-            # Create schedule entry
-            Scheduleentry.objects.get_or_create(
+            # Create class event
+            ClassEvent.objects.get_or_create(
                 cohort=cohort,
-                activity=activity,
+                subject=subj,
+                instructor=instructor,
                 day=day_code,
                 start_time=start_time,
                 end_time=end_time,
-                entry_type="LESSON"
+                defaults={"status": "CLASS"}
             )
             lesson_count += 1
             
@@ -85,19 +91,16 @@ class Command(BaseCommand):
         
         gym_count = 0
         for day_name, start_str, end_str, session in gym_slots:
-            activity_name = session.upper()
-            activity, _ = Activity.objects.get_or_create(name=activity_name[:50])
-            
             day_code = day_mapping.get(day_name, "MON")
             start_time = parse_time(start_str)
             end_time = parse_time(end_str)
             
-            Scheduleentry.objects.get_or_create(
-                activity=activity,
+            GymEvent.objects.get_or_create(
                 day=day_code,
                 start_time=start_time,
                 end_time=end_time,
-                entry_type="LESSON" # Treating gym slots as lessons for general schedule queries
+                status="GYM",
+                gender=session.upper()
             )
             gym_count += 1
             
@@ -110,9 +113,6 @@ class Command(BaseCommand):
         
         bubble_count = 0
         for day_name, sport, duration_str in bubble_slots:
-            activity_name = sport.upper()
-            activity, _ = Activity.objects.get_or_create(name=activity_name[:50])
-            
             day_code = day_mapping.get(day_name, "MON")
             
             # Parse duration_str like "10:00 – 12:00" or "18:00 – 21:00"
@@ -123,12 +123,11 @@ class Command(BaseCommand):
             start_time = parse_time(start_str)
             end_time = parse_time(end_str)
             
-            Scheduleentry.objects.get_or_create(
-                activity=activity,
+            Event.objects.get_or_create(
                 day=day_code,
                 start_time=start_time,
                 end_time=end_time,
-                entry_type="LESSON"
+                status="BUBBLE"
             )
             bubble_count += 1
             
