@@ -36,7 +36,7 @@ class Event(models.Model):
         max_length=50, choices=CHOICES, default='GYM')
 
 
-class GymEvent(Event):
+class GymEvent(models.Model):
     CHOICES = [
         ('MALE', 'Male'),
         ('FEMALE', 'Female'),
@@ -44,6 +44,7 @@ class GymEvent(Event):
     ]
     gender = models.CharField(
         max_length=50, choices=CHOICES, default='MALE')
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
 
 
@@ -58,13 +59,17 @@ class Instructor(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_TYPE, default='ON_CAMPUS')
 
-class ClassEvent(Event):
+
+class ClassEvent(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     instructor= models.ForeignKey(Instructor, on_delete=models.CASCADE)
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
-class MealTime(Event):
+
+class MealTime(models.Model):
     meal_name = models.CharField(max_length=50)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
 
 
