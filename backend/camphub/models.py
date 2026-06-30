@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 # Create your models here.
 #  new section
@@ -13,9 +14,9 @@ class Subject(models.Model):
     name = models.CharField(max_length=50)
 
 class Cohort(models.Model):
-    study_year = models.ForeignKey(StudyYear, on_delete=models.CASCADE)
+    study_year_id = models.ForeignKey(StudyYear, on_delete=models.CASCADE)
     cohort_name = models.CharField(max_length=50)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, null=True, blank=True)
+    room_id = models.ForeignKey(Room, on_delete=models.CASCADE, null=True, blank=True)
 
 class Event(models.Model):
     CHOICES = [
@@ -44,7 +45,7 @@ class GymEvent(models.Model):
     ]
     gender = models.CharField(
         max_length=50, choices=CHOICES, default='MALE')
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event_id = models.ForeignKey(Event, on_delete=models.CASCADE)
 
 
 
@@ -61,15 +62,15 @@ class Instructor(models.Model):
 
 
 class ClassEvent(models.Model):
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    instructor= models.ForeignKey(Instructor, on_delete=models.CASCADE)
-    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    instructor_id = models.ForeignKey(Instructor, on_delete=models.CASCADE)
+    cohort_id = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+    event_id = models.ForeignKey(Event, on_delete=models.CASCADE)
 
 
 class MealTime(models.Model):
     meal_name = models.CharField(max_length=50)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event_id = models.ForeignKey(Event, on_delete=models.CASCADE)
 
 
 
@@ -106,7 +107,7 @@ class Contact(models.Model):
 
 #     ]
 
-from django.conf import settings
+
 class TVBooking(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     lounge_name = models.CharField(max_length=50)
