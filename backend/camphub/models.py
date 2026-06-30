@@ -14,7 +14,7 @@ class Subject(models.Model):
     name = models.CharField(max_length=50)
 
 class Cohort(models.Model):
-    study_year_id = models.ForeignKey(StudyYear, on_delete=models.CASCADE)
+    study_year_id = models.ForeignKey(StudyYear, on_delete=models.CASCADE, null=True, blank=True)
     cohort_name = models.CharField(max_length=50)
     room_id = models.ForeignKey(Room, on_delete=models.CASCADE, null=True, blank=True)
 
@@ -45,7 +45,8 @@ class GymEvent(models.Model):
     ]
     gender = models.CharField(
         max_length=50, choices=CHOICES, default='MALE')
-    event_id = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event_id = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=True, blank=True)
 
 
 
@@ -62,15 +63,20 @@ class Instructor(models.Model):
 
 
 class ClassEvent(models.Model):
-    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    instructor_id = models.ForeignKey(Instructor, on_delete=models.CASCADE)
-    cohort_id = models.ForeignKey(Cohort, on_delete=models.CASCADE)
-    event_id = models.ForeignKey(Event, on_delete=models.CASCADE)
+    subject_id = models.ForeignKey(
+        Subject, on_delete=models.CASCADE, null=True, blank=True)
+    instructor_id = models.ForeignKey(
+        Instructor, on_delete=models.CASCADE, null=True, blank=True)
+    cohort_id = models.ForeignKey(
+        Cohort, on_delete=models.CASCADE, null=True, blank=True)
+    event_id = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=True, blank=True)
 
 
 class MealTime(models.Model):
     meal_name = models.CharField(max_length=50)
-    event_id = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event_id = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=True, blank=True)
 
 
 
@@ -85,6 +91,7 @@ class Contact(models.Model):
         ('FOOD', 'Food/Shop'),
         ('SECURITY', 'Security'),
         ('ADMIN', 'Administration'),
+        ('TAXI', 'Taxi/Transport')
 
     ]
 
@@ -97,19 +104,17 @@ class Contact(models.Model):
         max_length=50)
     role = models.CharField(
         max_length=50)
-    phone_number= models.IntegerField()
-    sector = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    phone_number = models.CharField(max_length=20)
+    sector = models.CharField(
+        max_length=20, choices=CATEGORY_CHOICES, default="FOOD")
 
-    location = models.CharField(max_length=20, choices=LOCATION_CHOICES)
+    location = models.CharField(max_length=20, choices=LOCATION_CHOICES, null=True, blank=True)
 
-# class Canteen(models.Model):
-#     MEAL_CHOICES= [
-
-#     ]
 
 
 class TVBooking(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     lounge_name = models.CharField(max_length=50)
     booker_name = models.CharField(max_length=100)
     booking_date = models.CharField(max_length=10)
@@ -122,7 +127,8 @@ class TVBooking(models.Model):
 
 
 class Reminder(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     reminder_type = models.CharField(max_length=20)  # "lesson", "gym", "bubble", "tv"
     subject_name = models.CharField(max_length=100)
     day = models.CharField(max_length=15)
