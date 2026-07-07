@@ -110,17 +110,17 @@ async def process_reminder_toggle(callback: CallbackQuery):
     lesson_id = int(parts[2])
     action = parts[3]
 
-    get_entry = sync_to_async(lambda: ClassEvent.objects.select_related('subject', 'cohort').get(id=lesson_id))
+    get_entry = sync_to_async(lambda: ClassEvent.objects.select_related('subject_id', 'cohort_id', 'event_id').get(id=lesson_id))
     try:
         entry = await get_entry()
     except ClassEvent.DoesNotExist:
         await callback.answer("Lesson not found.")
         return
 
-    subject_name = entry.subject.name.title() if entry.subject else "Unknown"
+    subject_name = entry.subject_id.name.title() if entry.subject_id else "Unknown"
     day_map = {"MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday", "THU": "Thursday", "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday"}
-    day = day_map.get(entry.day, entry.day)
-    time_str = entry.start_time.strftime("%H:%M") if entry.start_time else "09:00"
+    day = day_map.get(entry.event_id.day, entry.event_id.day) if entry.event_id else "Monday"
+    time_str = entry.event_id.start_time.strftime("%H:%M") if entry.event_id and entry.event_id.start_time else "09:00"
 
     if action == "off":
         await delete_reminder(callback.from_user.id, "lesson", subject_name, day, time_str)
@@ -139,16 +139,17 @@ async def save_lesson_reminder(callback: CallbackQuery):
     lesson_id = int(parts[2])
     offset = int(parts[3])
 
-    get_entry = sync_to_async(lambda: ClassEvent.objects.select_related('subject').get(id=lesson_id))
+    get_entry = sync_to_async(lambda: ClassEvent.objects.select_related('subject_id', 'event_id').get(id=lesson_id))
     try:
         entry = await get_entry()
     except ClassEvent.DoesNotExist:
         return
 
-    subject_name = entry.subject.name.title() if entry.subject else "Unknown"
+    subject_name = entry.subject_id.name.title() if entry.subject_id else "Unknown"
     day_map = {"MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday", "THU": "Thursday", "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday"}
-    day = day_map.get(entry.day, entry.day)
-    time_str = entry.start_time.strftime("%H:%M") if entry.start_time else "09:00"
+    day = day_map.get(entry.event_id.day, entry.event_id.day) if entry.event_id else "Monday"
+    time_str = entry.event_id.start_time.strftime("%H:%M") if entry.event_id and entry.event_id.start_time else "09:00"
+
 
     await add_reminder(callback.from_user.id, "lesson", subject_name, day, time_str, offset)
     await callback.message.edit_text(f"Reminder set for {subject_name} {offset} minutes before start.")
