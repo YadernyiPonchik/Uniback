@@ -130,13 +130,11 @@ class TVBooking(models.Model):
 class Reminder(models.Model):
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, db_column='user_id')
-    reminder_type = models.CharField(max_length=20)  # "lesson", "gym", "bubble", "tv"
-    subject_name = models.CharField(max_length=100)
-    day = models.CharField(max_length=15)
     event_time_str = models.CharField(max_length=10)
     reminder_offset = models.IntegerField()
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
     
     def __str__(self):
-        return f"{self.user_id} - {self.reminder_type} - {self.subject_name}"
+        event_str = f" ({self.event_id.day} {self.event_id.start_time})" if self.event_id else ""
+        return f"Reminder {self.id} for {self.user_id}{event_str}"

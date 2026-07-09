@@ -67,12 +67,49 @@ class ReminderWrapper:
         self.id = entry.id
         # FK field is named user_id, so the related object is entry.user_id
         self.telegram_user_id = entry.user_id.telegram_id if entry.user_id else None
-        self.reminder_type = entry.reminder_type
-        self.subject_name = entry.subject_name
-        self.day = entry.day
-        self.event_time_str = entry.event_time_str
         self.reminder_offset = entry.reminder_offset
+        self.event_time_str = entry.event_time_str
         self.event_id = entry.event_id.id if entry.event_id else None
+        
+        event = entry.event_id
+        if event:
+            # 1. Resolve reminder_type
+            if event.status == 'CLASS':
+                self.reminder_type = "lesson"
+            elif event.status == 'GYM':
+                self.reminder_type = "gym"
+            elif event.status == 'BUBBLE':
+                self.reminder_type = "bubble"
+            elif event.status == 'TV':
+                self.reminder_type = "tv"
+            else:
+                self.reminder_type = "unknown"
+                
+            # 2. Resolve day name (or date for TV lounge bookings)
+            if event.status == 'TV' and event.date:
+                self.day = event.date.strftime("%d.%m")
+            else:
+                self.day = day_reverse.get(event.day, event.day)
+                
+            # 3. Resolve subject_name dynamically based on the event status
+            if event.status == 'CLASS':
+                class_events = list(event.classevent_set.all())
+                class_event = class_events[0] if class_events else None
+                self.subject_name = class_event.subject_id.name.title() if class_event and class_event.subject_id else "Unknown"
+            elif event.status == 'GYM':
+                self.subject_name = "Gym Session"
+            elif event.status == 'BUBBLE':
+                self.subject_name = "Bubble Sports"
+            elif event.status == 'TV':
+                tv_bookings = list(event.tvbooking_set.all())
+                tv_booking = tv_bookings[0] if tv_bookings else None
+                self.subject_name = tv_booking.lounge_name if tv_booking else "TV Lounge"
+            else:
+                self.subject_name = "Unknown Event"
+        else:
+            self.reminder_type = "unknown"
+            self.day = ""
+            self.subject_name = "Unknown Event"
 
 def parse_time_str(t_str):
     t_str = t_str.strip()
@@ -348,25 +385,27 @@ def delete_tv_booking(booking_id: int):
 @sync_to_async
 def get_user_reminders(user_id: int):
     # FK field named user_id → lookup is user_id__telegram_id
-    entries = Reminder.objects.filter(user_id__telegram_id=user_id).select_related('user_id', 'event_id')
+    entries = Reminder.objects.filter(user_id__telegram_id=user_id).select_related(
+        'user_id', 'event_id'
+    ).prefetch_related(
+        'event_id__classevent_set__subject_id',
+        'event_id__tvbooking_set'
+    )
     return [ReminderWrapper(e) for e in entries]
 
 @sync_to_async
 def get_all_reminders():
-    entries = Reminder.objects.all().select_related('user_id', 'event_id')
+    entries = Reminder.objects.all().select_related(
+        'user_id', 'event_id'
+    ).prefetch_related(
+        'event_id__classevent_set__subject_id',
+        'event_id__tvbooking_set'
+    )
     return [ReminderWrapper(e) for e in entries]
 
 @sync_to_async
 def add_reminder(user_id: int, r_type: str, subject: str, day: str, time_str: str, offset: int):
     u = UserAccount.objects.get(telegram_id=user_id)
-    Reminder.objects.filter(
-        user_id=u,
-        reminder_type=r_type,
-        subject_name=subject,
-        day=day,
-        event_time_str=time_str
-    ).delete()
-    
     day_code = day_mapping.get(day, day)
     start_time = parse_time_str(time_str)
     
@@ -385,24 +424,37 @@ def add_reminder(user_id: int, r_type: str, subject: str, day: str, time_str: st
             event_status = "BUBBLE"
         event = Event.objects.filter(day=day_code, start_time=start_time, status=event_status).first()
         
-    r = Reminder.objects.create(
-        user_id=u,
-        reminder_type=r_type,
-        subject_name=subject,
-        day=day,
-        event_time_str=time_str,
-        reminder_offset=offset,
-        event_id=event
-    )
-    return ReminderWrapper(r)
+    if event:
+        Reminder.objects.filter(user_id=u, event_id=event).delete()
+        r = Reminder.objects.create(
+            user_id=u,
+            event_time_str=time_str,
+            reminder_offset=offset,
+            event_id=event
+        )
+        return ReminderWrapper(r)
+    return None
 
 @sync_to_async
 def delete_reminder(user_id: int, r_type: str, subject: str, day: str, time_str: str):
     u = UserAccount.objects.get(telegram_id=user_id)
-    Reminder.objects.filter(
-        user_id=u,
-        reminder_type=r_type,
-        subject_name=subject,
-        day=day,
-        event_time_str=time_str
-    ).delete()
+    day_code = day_mapping.get(day, day)
+    start_time = parse_time_str(time_str)
+    
+    event = None
+    if r_type == "tv":
+        try:
+            parsed_date = datetime.strptime(day, "%d.%m").date().replace(year=datetime.now().year)
+            event = Event.objects.filter(status="TV", start_time=start_time, date=parsed_date).first()
+        except ValueError:
+            pass
+    else:
+        event_status = "CLASS"
+        if r_type == "gym":
+            event_status = "GYM"
+        elif r_type == "bubble":
+            event_status = "BUBBLE"
+        event = Event.objects.filter(day=day_code, start_time=start_time, status=event_status).first()
+        
+    if event:
+        Reminder.objects.filter(user_id=u, event_id=event).delete()
