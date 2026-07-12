@@ -131,7 +131,8 @@ def create_user(telegram_id: int, name: str = None, gender: str = None, cohort_n
     email = f"tg_{telegram_id}@unispace.com"
     cohort = None
     if cohort_name:
-        cohort = Cohort.objects.filter(cohort_name=cohort_name).first()
+        study_year, _ = StudyYear.objects.get_or_create(year_name="2025-2026")
+        cohort, _ = Cohort.objects.get_or_create(cohort_name=cohort_name, defaults={'study_year_id': study_year})
     u = UserAccount.objects.create(
         email=email,
         name=name or "Student",
@@ -145,7 +146,8 @@ def create_user(telegram_id: int, name: str = None, gender: str = None, cohort_n
 @sync_to_async
 def update_user_level(telegram_id: int, level: str):
     try:
-        cohort = Cohort.objects.filter(cohort_name=level).first()
+        study_year, _ = StudyYear.objects.get_or_create(year_name="2025-2026")
+        cohort, _ = Cohort.objects.get_or_create(cohort_name=level, defaults={'study_year_id': study_year})
         u = UserAccount.objects.get(telegram_id=telegram_id)
         u.cohort = cohort
         u.save()
@@ -458,3 +460,31 @@ def delete_reminder(user_id: int, r_type: str, subject: str, day: str, time_str:
         
     if event:
         Reminder.objects.filter(user_id=u, event_id=event).delete()
+
+@sync_to_async
+def add_all_lessons_reminders(user_id: int, level: str, offset: int):
+    u = UserAccount.objects.get(telegram_id=user_id)
+    class_events = ClassEvent.objects.filter(cohort_id__cohort_name=level).select_related('event_id')
+    
+    reminders_created = 0
+    for ce in class_events:
+        if ce.event_id:
+            Reminder.objects.filter(user_id=u, event_id=ce.event_id).delete()
+            time_str = ce.event_id.start_time.strftime("%H:%M")
+            Reminder.objects.create(
+                user_id=u,
+                event_time_str=time_str,
+                reminder_offset=offset,
+                event_id=ce.event_id
+            )
+            reminders_created += 1
+    return reminders_created
+
+@sync_to_async
+def delete_all_lessons_reminders(user_id: int, level: str):
+    u = UserAccount.objects.get(telegram_id=user_id)
+    class_events = ClassEvent.objects.filter(cohort_id__cohort_name=level).select_related('event_id')
+    event_ids = [ce.event_id.id for ce in class_events if ce.event_id]
+    
+    deleted_count, _ = Reminder.objects.filter(user_id=u, event_id_id__in=event_ids).delete()
+    return deleted_count
