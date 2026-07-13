@@ -3,15 +3,35 @@ from django.conf import settings
 
 # Create your models here.
 #  new section
+
+
 class Room(models.Model):
-    room_number = models.CharField(max_length=15)
+    room_number = models.CharField(
+        max_length=15, unique=True)
+
+    def __str__(self):
+        return self.room_number
+
 
 class StudyYear(models.Model):
-    year_name = models.CharField(max_length=50)
+    CHOICES = [
+        ('FESH', 'Fresh'),
+        ('SOPH', 'Soph'),
+        ('JUN', 'Jun'),
+        ('SEN', 'Sen'),
+    ]
+    year_name = models.CharField(max_length=50, choices=CHOICES, default='SOF')
 
 
 class Subject(models.Model):
+    CHOICES = [
+        ('MATH', 'Math'),
+        ('ENGLISH', 'English'),
+        ('PHYSICS', 'Physics'),
+        ('KYRGIZ', 'Kyrgiz'),
+    ]
     name = models.CharField(max_length=50)
+
 
 class Cohort(models.Model):
     study_year_id = models.ForeignKey(StudyYear, on_delete=models.CASCADE, null=True, blank=True, db_column='study_year_id')
@@ -42,13 +62,12 @@ class GymEvent(models.Model):
     CHOICES = [
         ('MALE', 'Male'),
         ('FEMALE', 'Female'),
-        
+
     ]
     gender = models.CharField(
         max_length=50, choices=CHOICES, default='MALE')
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
-
 
 
 class Instructor(models.Model):
@@ -64,6 +83,7 @@ class Instructor(models.Model):
 
 
 class ClassEvent(models.Model):
+
     subject_id = models.ForeignKey(
         Subject, on_delete=models.CASCADE, null=True, blank=True, db_column='subject_id')
     instructor_id = models.ForeignKey(
@@ -72,6 +92,8 @@ class ClassEvent(models.Model):
         Cohort, on_delete=models.CASCADE, null=True, blank=True, db_column='cohort_id')
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
+    room_id = models.ForeignKey(
+        Room, on_delete=models.CASCADE, null=True, blank=True, db_column='room_id')
 
 
 class MealTime(models.Model):
@@ -80,10 +102,7 @@ class MealTime(models.Model):
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
 
 
-
-
 # end of new section
-
 
 
 class Contact(models.Model):
@@ -109,8 +128,8 @@ class Contact(models.Model):
     sector = models.CharField(
         max_length=20, choices=CATEGORY_CHOICES, default="FOOD")
 
-    location = models.CharField(max_length=20, choices=LOCATION_CHOICES, null=True, blank=True)
-
+    location = models.CharField(
+        max_length=20, choices=LOCATION_CHOICES, null=True, blank=True)
 
 class TVBooking(models.Model):
     user_id = models.ForeignKey(
@@ -119,12 +138,9 @@ class TVBooking(models.Model):
     booker_name = models.CharField(max_length=100)
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
-    
     def __str__(self):
         event_str = f"{self.event_id.day} {self.event_id.start_time}" if self.event_id else "No Event"
         return f"{self.booker_name} - {self.lounge_name} ({event_str})"
-
-
 
 
 class Reminder(models.Model):

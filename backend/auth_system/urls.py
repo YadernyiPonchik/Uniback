@@ -8,7 +8,8 @@ from django.contrib import admin
 router = DefaultRouter()
 router.register(r'schedule-entries', views.EventViewSet)
 router.register(r'contacts', views.ContactViewSet)
-
+router.register(r'contact-entries', views.ContactViewSet, basename='contact-entries')
+router.register(r'schedule', views.ScheduleViewSet, basename='schedule')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
