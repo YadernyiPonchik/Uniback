@@ -66,12 +66,10 @@ class Event(models.Model):
     day = models.CharField(max_length=3, choices=DAYS, default='MON')
     start_time = models.TimeField()
     end_time = models.TimeField()
-<<<<<<< HEAD
-    status = models.CharField(max_length=50, choices=CHOICES, default='GYM')
-=======
+
     status = models.CharField(
         max_length=50, choices=CHOICES, default='GYM')
->>>>>>> 76dbf405c91ab1e81eed1a49212543de21c7327e
+
 
     def __str__(self):
         return f"{self.get_status_display()} ({self.get_day_display()} {self.start_time.strftime('%H:%M')}-{self.end_time.strftime('%H:%M')})"
@@ -160,17 +158,14 @@ class ClassEvent(models.Model):
 class MealTime(models.Model):
     meal_name = models.CharField(max_length=50)
     event_id = models.ForeignKey(
-<<<<<<< HEAD
-        Event, on_delete=models.CASCADE, null=True, blank=True)
+        Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
 
 
 class BubbleEvent(models.Model):
     name = models.CharField(max_length=100)
     event_id = models.ForeignKey(
-        Event, on_delete=models.CASCADE, null=True, blank=True)
-=======
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
->>>>>>> 76dbf405c91ab1e81eed1a49212543de21c7327e
+
 
 
 # end of new section
