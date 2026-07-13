@@ -32,9 +32,7 @@ class Event(models.Model):
     day = models.CharField(max_length=3, choices=DAYS, default='MON')
     start_time = models.TimeField()
     end_time = models.TimeField()
-    status = models.CharField(
-        
-        max_length=50, choices=CHOICES, default='GYM')
+    status = models.CharField(max_length=50, choices=CHOICES, default='GYM')
 
 
 class GymEvent(models.Model):
@@ -79,6 +77,10 @@ class MealTime(models.Model):
         Event, on_delete=models.CASCADE, null=True, blank=True)
 
 
+class BubbleEvent(models.Model):
+    name = models.CharField(max_length=100)
+    event_id = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=True, blank=True)
 
 
 # end of new section

@@ -4,10 +4,15 @@ from django.urls import path, include
 from camphub import views
 from rest_framework.routers import DefaultRouter
 from django.contrib import admin
+
+
 router = DefaultRouter()
 router.register(r'schedule-entries', views.EventViewSet)
 router.register(r'contact-entries', views.ContactViewSet)
 router.register(r'schedule', views.ScheduleViewSet, basename='schedule')
+router.register(r'bubble-events', views.BubbleEventViewSet)
+router.register(r'gym-events', views.GymEventViewSet)
+router.register(r'meal-times', views.MealTimeViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
