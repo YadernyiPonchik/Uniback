@@ -39,8 +39,6 @@ class Cohort(models.Model):
         StudyYear, on_delete=models.CASCADE, null=True, blank=True, db_column='study_year_id')
     cohort_name = models.CharField(max_length=50)
     # delete
-    room_id = models.OneToOneField(
-        Room, on_delete=models.CASCADE, null=True, blank=True, db_column='room_id')
 
 
 class Event(models.Model):
