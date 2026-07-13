@@ -19,28 +19,37 @@ day_reverse = {
 }
 
 # Compatibility wrappers to mimic SQLAlchemy model objects
+
+
 class LessonWrapper:
     def __init__(self, entry):
         self.id = entry.id
         self.academic_level = entry.cohort.cohort_name if entry.cohort else ""
         self.day_of_week = day_reverse.get(entry.day, entry.day)
-        self.time_str = entry.start_time.strftime("%H:%M") if entry.start_time else "09:00"
+        self.time_str = entry.start_time.strftime(
+            "%H:%M") if entry.start_time else "09:00"
         self.subject_name = entry.subject.name.title() if entry.subject else ""
+
 
 class GymSlotWrapper:
     def __init__(self, entry):
         self.id = entry.id
         self.day_of_week = day_reverse.get(entry.day, entry.day)
-        self.start_time_str = entry.start_time.strftime("%H:%M") if entry.start_time else ""
-        self.end_time_str = entry.end_time.strftime("%H:%M") if entry.end_time else ""
+        self.start_time_str = entry.start_time.strftime(
+            "%H:%M") if entry.start_time else ""
+        self.end_time_str = entry.end_time.strftime(
+            "%H:%M") if entry.end_time else ""
         self.session_type = entry.gender.title() if entry.gender else ""
+
 
 class BubbleWrapper:
     def __init__(self, entry):
         self.id = entry.id
         self.day_of_week = day_reverse.get(entry.day, entry.day)
-        self.sport_name = entry.status.replace("_", " ").title() if entry.status else ""
+        self.sport_name = entry.status.replace(
+            "_", " ").title() if entry.status else ""
         self.time_str = f"{entry.start_time.strftime('%H:%M')} – {entry.end_time.strftime('%H:%M')}"
+
 
 class ContactWrapper:
     def __init__(self, entry):
@@ -50,6 +59,7 @@ class ContactWrapper:
         self.phone = str(entry.phone_number)
         self.details = entry.role
 
+
 class TVBookingWrapper:
     def __init__(self, entry):
         self.id = entry.id
@@ -58,6 +68,7 @@ class TVBookingWrapper:
         self.booker_name = entry.booker_name
         self.booking_date = entry.booking_date
         self.booking_time = entry.booking_time
+
 
 class ReminderWrapper:
     def __init__(self, entry):
@@ -69,20 +80,25 @@ class ReminderWrapper:
         self.event_time_str = entry.event_time_str
         self.reminder_offset = entry.reminder_offset
 
+
 def parse_time_str(t_str):
     t_str = t_str.strip()
     dt = datetime.strptime(t_str, "%H:%M")
     return time(dt.hour, dt.minute)
 
 # --- User CRUD ---
+
+
 @sync_to_async
 def get_user(telegram_id: int):
     try:
-        u = UserAccount.objects.select_related('cohort').get(telegram_id=telegram_id)
+        u = UserAccount.objects.select_related(
+            'cohort').get(telegram_id=telegram_id)
         u.academic_level = u.cohort.cohort_name if u.cohort else None
         return u
     except UserAccount.DoesNotExist:
         return None
+
 
 @sync_to_async
 def create_user(telegram_id: int, name: str = None, gender: str = None, cohort_name: str = None):
@@ -90,7 +106,7 @@ def create_user(telegram_id: int, name: str = None, gender: str = None, cohort_n
     cohort = None
     if cohort_name:
         cohort = Cohort.objects.filter(cohort_name=cohort_name).first()
-    
+
     u = UserAccount.objects.create(
         email=email,
         name=name or "Student",
@@ -100,6 +116,7 @@ def create_user(telegram_id: int, name: str = None, gender: str = None, cohort_n
     )
     u.academic_level = cohort_name
     return u
+
 
 @sync_to_async
 def update_user_level(telegram_id: int, level: str):
@@ -113,6 +130,7 @@ def update_user_level(telegram_id: int, level: str):
     except UserAccount.DoesNotExist:
         return None
 
+
 @sync_to_async
 def update_user_gender(telegram_id: int, gender: str):
     try:
@@ -124,6 +142,8 @@ def update_user_gender(telegram_id: int, gender: str):
         return None
 
 # --- Lessons CRUD (now uses ClassEvent) ---
+
+
 @sync_to_async
 def get_lessons_for_day(level: str, day: str):
     day_code = day_mapping.get(day, day)
@@ -133,6 +153,7 @@ def get_lessons_for_day(level: str, day: str):
     ).select_related('cohort', 'subject').order_by('start_time')
     return [LessonWrapper(e) for e in entries]
 
+
 @sync_to_async
 def get_weekly_lessons(level: str):
     entries = ClassEvent.objects.filter(
@@ -140,21 +161,23 @@ def get_weekly_lessons(level: str):
     ).select_related('cohort', 'subject').order_by('day', 'start_time')
     return [LessonWrapper(e) for e in entries]
 
+
 @sync_to_async
 def add_lesson(level: str, day: str, time_str: str, subject_name: str):
     study_year, _ = StudyYear.objects.get_or_create(year_name="2025-2026")
-    cohort, _ = Cohort.objects.get_or_create(study_year=study_year, cohort_name=level)
+    cohort, _ = Cohort.objects.get_or_create(
+        study_year=study_year, cohort_name=level)
     subject, _ = Subject.objects.get_or_create(name=subject_name.title()[:50])
     instructor, _ = Instructor.objects.get_or_create(
         first_name="TBD", last_name="TBD",
         defaults={"status": "ON_CAMPUS"}
     )
-    
+
     day_code = day_mapping.get(day, "MON")
     start_time = parse_time_str(time_str)
     start_dt = datetime.combine(datetime.today(), start_time)
     end_time = (start_dt + timedelta(hours=1, minutes=30)).time()
-    
+
     entry, _ = ClassEvent.objects.get_or_create(
         cohort=cohort,
         subject=subject,
@@ -166,11 +189,14 @@ def add_lesson(level: str, day: str, time_str: str, subject_name: str):
     )
     return LessonWrapper(entry)
 
+
 @sync_to_async
 def remove_lesson(lesson_id: int):
     ClassEvent.objects.filter(id=lesson_id).delete()
 
 # --- Gym Slots CRUD (now uses GymEvent) ---
+
+
 @sync_to_async
 def get_gym_slots_for_day(day: str):
     day_code = day_mapping.get(day, day)
@@ -179,17 +205,19 @@ def get_gym_slots_for_day(day: str):
     ).order_by('start_time')
     return [GymSlotWrapper(e) for e in entries]
 
+
 @sync_to_async
 def get_all_gym_slots():
     entries = GymEvent.objects.all().order_by('day', 'start_time')
     return [GymSlotWrapper(e) for e in entries]
+
 
 @sync_to_async
 def add_gym_slot(day: str, start_str: str, end_str: str, session_type: str = "MALE"):
     day_code = day_mapping.get(day, "MON")
     start_time = parse_time_str(start_str)
     end_time = parse_time_str(end_str)
-    
+
     entry = GymEvent.objects.create(
         day=day_code,
         start_time=start_time,
@@ -200,6 +228,8 @@ def add_gym_slot(day: str, start_str: str, end_str: str, session_type: str = "MA
     return entry
 
 # --- Bubble Sports CRUD (now uses Event with status=BUBBLE) ---
+
+
 @sync_to_async
 def get_bubble_sports_for_day(day: str):
     day_code = day_mapping.get(day, day)
@@ -211,6 +241,7 @@ def get_bubble_sports_for_day(day: str):
     entries = [e for e in entries if not hasattr(e, 'gymevent')]
     return [BubbleWrapper(e) for e in entries]
 
+
 @sync_to_async
 def get_all_bubble_sports():
     entries = Event.objects.filter(
@@ -219,15 +250,17 @@ def get_all_bubble_sports():
     entries = [e for e in entries if not hasattr(e, 'gymevent')]
     return [BubbleWrapper(e) for e in entries]
 
+
 @sync_to_async
 def add_bubble_sport(day: str, sport: str, time_range_str: str):
     import re
     day_code = day_mapping.get(day, "MON")
-    
+
     parts = re.split(r'[–-]', time_range_str)
     start_time = parse_time_str(parts[0].strip())
-    end_time = parse_time_str(parts[1].strip()) if len(parts) > 1 else start_time
-    
+    end_time = parse_time_str(parts[1].strip()) if len(
+        parts) > 1 else start_time
+
     entry = Event.objects.create(
         day=day_code,
         start_time=start_time,
@@ -237,6 +270,8 @@ def add_bubble_sport(day: str, sport: str, time_range_str: str):
     return entry
 
 # --- Contacts CRUD ---
+
+
 @sync_to_async
 def get_contacts_by_category(category: str):
     loc = "ON_CAMPUS" if category == "On Campus" else "OFF_CAMPUS"
@@ -244,18 +279,23 @@ def get_contacts_by_category(category: str):
     return [ContactWrapper(e) for e in entries]
 
 # --- TV Bookings CRUD ---
+
+
 @sync_to_async
 def get_tv_bookings(user_id: int):
-    entries = TVBooking.objects.filter(user__telegram_id=user_id).select_related('user')
+    entries = TVBooking.objects.filter(
+        user__telegram_id=user_id).select_related('user_id')
     return [TVBookingWrapper(e) for e in entries]
+
 
 @sync_to_async
 def get_tv_booking_by_id(booking_id: int):
     try:
-        b = TVBooking.objects.select_related('user').get(id=booking_id)
+        b = TVBooking.objects.select_related('user_id').get(id=booking_id)
         return TVBookingWrapper(b)
     except TVBooking.DoesNotExist:
         return None
+
 
 @sync_to_async
 def add_tv_booking(user_id: int, lounge_name: str, booker_name: str, booking_date: str, booking_time: str):
@@ -268,6 +308,7 @@ def add_tv_booking(user_id: int, lounge_name: str, booker_name: str, booking_dat
         booking_time=booking_time
     )
     return TVBookingWrapper(b)
+
 
 @sync_to_async
 def update_tv_booking(booking_id: int, lounge_name: str, booker_name: str, booking_date: str, booking_time: str):
@@ -282,20 +323,26 @@ def update_tv_booking(booking_id: int, lounge_name: str, booker_name: str, booki
     except TVBooking.DoesNotExist:
         return None
 
+
 @sync_to_async
 def delete_tv_booking(booking_id: int):
     TVBooking.objects.filter(id=booking_id).delete()
 
 # --- Reminders CRUD ---
+
+
 @sync_to_async
 def get_user_reminders(user_id: int):
-    entries = Reminder.objects.filter(user__telegram_id=user_id).select_related('user')
+    entries = Reminder.objects.filter(
+        user__telegram_id=user_id).select_related('user_id')
     return [ReminderWrapper(e) for e in entries]
+
 
 @sync_to_async
 def get_all_reminders():
-    entries = Reminder.objects.all().select_related('user')
+    entries = Reminder.objects.all().select_related('user_id')
     return [ReminderWrapper(e) for e in entries]
+
 
 @sync_to_async
 def add_reminder(user_id: int, r_type: str, subject: str, day: str, time_str: str, offset: int):
@@ -308,7 +355,7 @@ def add_reminder(user_id: int, r_type: str, subject: str, day: str, time_str: st
         day=day,
         event_time_str=time_str
     ).delete()
-    
+
     r = Reminder.objects.create(
         user=u,
         reminder_type=r_type,
@@ -318,6 +365,7 @@ def add_reminder(user_id: int, r_type: str, subject: str, day: str, time_str: st
         reminder_offset=offset
     )
     return ReminderWrapper(r)
+
 
 @sync_to_async
 def delete_reminder(user_id: int, r_type: str, subject: str, day: str, time_str: str):
