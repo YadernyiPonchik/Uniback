@@ -38,7 +38,7 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # ALLOWED_HOSTS = []
 if DEBUG:
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost','https://web-production-4fa53e.up.railway.app']
 else:
     # Put your group's production domain here later
     ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
