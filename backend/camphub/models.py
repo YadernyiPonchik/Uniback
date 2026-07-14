@@ -40,6 +40,11 @@ class Subject(models.Model):
 
 
 class Cohort(models.Model):
+<<<<<<< HEAD
+    study_year_id = models.ForeignKey(StudyYear, on_delete=models.CASCADE, null=True, blank=True, db_column='study_year_id')
+    cohort_name = models.CharField(max_length=50)
+    room_id = models.ForeignKey(Room, on_delete=models.CASCADE, null=True, blank=True, db_column='room_id')
+=======
     CHOICES = [
         ('CM', 'CM'),
         ('CS', 'CS'),
@@ -51,6 +56,7 @@ class Cohort(models.Model):
     def __str__(self):
         return self.cohort_name
 
+>>>>>>> origin/main
 
 class Event(models.Model):
     CHOICES = [
@@ -58,6 +64,7 @@ class Event(models.Model):
         ('CLASS', 'Class'),
         ('BUBBLE', 'Bubble'),
         ('MEAL_TIME', 'Meal_Time'),
+        ('TV', 'TV'),
     ]
     DAYS = [
         ('MON', 'Monday'), ('TUE', 'Tuesday'), ('WED', 'Wednesday'),
@@ -66,9 +73,13 @@ class Event(models.Model):
     day = models.CharField(max_length=3, choices=DAYS, default='MON')
     start_time = models.TimeField()
     end_time = models.TimeField()
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
     status = models.CharField(
         max_length=50, choices=CHOICES, default='GYM')
+    date = models.DateField(null=True, blank=True)
 
 
     def __str__(self):
@@ -112,7 +123,6 @@ class ClassEvent(models.Model):
         Cohort, on_delete=models.CASCADE, null=True, blank=True, db_column='cohort_id')
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
-
     room_id = models.ForeignKey(
         Room, on_delete=models.CASCADE, null=True, blank=True, db_column='room_id')
 
@@ -197,28 +207,26 @@ class Contact(models.Model):
     location = models.CharField(
         max_length=20, choices=LOCATION_CHOICES, null=True, blank=True)
 
-
 class TVBooking(models.Model):
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, db_column='user_id')
     lounge_name = models.CharField(max_length=50)
     booker_name = models.CharField(max_length=100)
-    booking_date = models.CharField(max_length=10)
-    booking_time = models.CharField(max_length=5)
-
+    event_id = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
     def __str__(self):
-        return f"{self.booker_name} - {self.lounge_name} ({self.booking_date} {self.booking_time})"
+        event_str = f"{self.event_id.day} {self.event_id.start_time}" if self.event_id else "No Event"
+        return f"{self.booker_name} - {self.lounge_name} ({event_str})"
 
 
 class Reminder(models.Model):
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, db_column='user_id')
-    # "lesson", "gym", "bubble", "tv"
-    reminder_type = models.CharField(max_length=20)
-    subject_name = models.CharField(max_length=100)
-    day = models.CharField(max_length=15)
     event_time_str = models.CharField(max_length=10)
     reminder_offset = models.IntegerField()
-
+    event_id = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
+    
     def __str__(self):
-        return f"{self.user} - {self.reminder_type} - {self.subject_name}"
+        event_str = f" ({self.event_id.day} {self.event_id.start_time})" if self.event_id else ""
+        return f"Reminder {self.id} for {self.user_id}{event_str}"
