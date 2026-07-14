@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-
+from django.core.exceptions import ValidationError
 # Create your models here.
 #  new section
 
@@ -22,6 +22,9 @@ class StudyYear(models.Model):
     ]
     year_name = models.CharField(max_length=50, choices=CHOICES, default='SOF')
 
+    def __str__(self):
+        return self.year_name
+
 
 class Subject(models.Model):
     CHOICES = [
@@ -30,13 +33,30 @@ class Subject(models.Model):
         ('PHYSICS', 'Physics'),
         ('KYRGIZ', 'Kyrgiz'),
     ]
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, choices=CHOICES)
+
+    def __str__(self):
+        return self.name
 
 
 class Cohort(models.Model):
+<<<<<<< HEAD
     study_year_id = models.ForeignKey(StudyYear, on_delete=models.CASCADE, null=True, blank=True, db_column='study_year_id')
     cohort_name = models.CharField(max_length=50)
     room_id = models.ForeignKey(Room, on_delete=models.CASCADE, null=True, blank=True, db_column='room_id')
+=======
+    CHOICES = [
+        ('CM', 'CM'),
+        ('CS', 'CS'),
+    ]
+    study_year_id = models.ForeignKey(
+        StudyYear, on_delete=models.CASCADE, null=True, blank=True, db_column='study_year_id')
+    cohort_name = models.CharField(max_length=50, choices=CHOICES)
+
+    def __str__(self):
+        return self.cohort_name
+
+>>>>>>> origin/main
 
 class Event(models.Model):
     CHOICES = [
@@ -53,9 +73,17 @@ class Event(models.Model):
     day = models.CharField(max_length=3, choices=DAYS, default='MON')
     start_time = models.TimeField()
     end_time = models.TimeField()
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
     status = models.CharField(
         max_length=50, choices=CHOICES, default='GYM')
     date = models.DateField(null=True, blank=True)
+
+
+    def __str__(self):
+        return f"{self.get_status_display()} ({self.get_day_display()} {self.start_time.strftime('%H:%M')}-{self.end_time.strftime('%H:%M')})"
 
 
 class GymEvent(models.Model):
@@ -81,6 +109,9 @@ class Instructor(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_TYPE, default='ON_CAMPUS')
 
+    def __str__(self):
+        return self.first_name
+
 
 class ClassEvent(models.Model):
 
@@ -95,11 +126,56 @@ class ClassEvent(models.Model):
     room_id = models.ForeignKey(
         Room, on_delete=models.CASCADE, null=True, blank=True, db_column='room_id')
 
+    def clean(self):
+        super().clean()
+
+        if not self.event_id:
+            return
+
+        target_status = self.event_id.status
+        target_day = self.event_id.day
+        target_start = self.event_id.start_time
+        target_end = self.event_id.end_time
+
+        conflicts = ClassEvent.objects.filter(
+            event_id__status=target_status,  # same type
+            event_id__day=target_day,
+            event_id__start_time__lt=target_end,
+            event_id__end_time__gt=target_start
+        )
+
+        # prevent self-collision
+        if self.pk:
+            conflicts = conflicts.exclude(pk=self.pk)
+
+        if self.room_id and conflicts.filter(room_id=self.room_id).exists():
+            raise ValidationError(
+                f"Conflict: Room {self.room_id} already has a {target_status} event during this time."
+            )
+
+        # Instructor Conflict
+        if self.instructor_id and conflicts.filter(instructor_id=self.instructor_id).exists():
+            raise ValidationError(
+                f"Conflict: Instructor {self.instructor_id} is already busy with another {target_status} event."
+            )
+
+        if self.cohort_id and conflicts.filter(cohort_id=self.cohort_id).exists():
+            raise ValidationError(
+                f"Conflict: Cohort {self.cohort_id} is already attending a {target_status} event."
+            )
+
 
 class MealTime(models.Model):
     meal_name = models.CharField(max_length=50)
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
+
+
+class BubbleEvent(models.Model):
+    name = models.CharField(max_length=100)
+    event_id = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
+
 
 
 # end of new section
