@@ -8,8 +8,8 @@ echo "Applying database migrations..."
 python manage.py migrate --noinput
 
 # Start the Telegram bot in the background
-echo "Starting Telegram Bot..."
-python manage.py bot &
+#echo "Starting Telegram Bot..."
+#python manage.py bot &
 
 # Start the Django web server in the foreground
 # justrunmy.app will supply the $PORT environment variable
