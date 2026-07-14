@@ -42,7 +42,8 @@ if DEBUG:
 else:
     # Put your group's production domain here later
     ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 
