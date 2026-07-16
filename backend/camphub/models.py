@@ -99,7 +99,7 @@ class Instructor(models.Model):
         max_length=20, choices=STATUS_TYPE, default='ON_CAMPUS')
 
     def __str__(self):
-        return self.first_name
+        return f"{self.first_name} {self.last_name}"
 
 
 class ClassEvent(models.Model):
