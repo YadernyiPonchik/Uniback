@@ -3,7 +3,10 @@ from django.db.models import Q
 from .serializers import EventSerializer, ContactSerializer, ScheduleSerializer, BubbleEventSerializer, GymEventSerializer, MealTimeSerializer, ClassEventSerializer, SubjectSerializer, InstructorSerializer, CohortSerializer, RoomSerializer
 from .models import Event, Contact, ClassEvent, BubbleEvent, GymEvent, MealTime, Subject, Instructor, Cohort, Room
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
@@ -18,11 +21,10 @@ class EventViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
 class ContactViewSet(viewsets.ModelViewSet):
-    queryset= Contact.objects.all()
+    queryset = Contact.objects.all()
     serializer_class = ContactSerializer
 
     def get_permissions(self):
-
         if self.action in ['list', 'retrieve']:
             # Allow everyone to see
             permission_classes = [permissions.AllowAny]

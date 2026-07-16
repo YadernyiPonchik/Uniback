@@ -34,7 +34,6 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = '__all__'
 
-
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
