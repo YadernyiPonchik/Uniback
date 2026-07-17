@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('camphub', '0006_alter_contact_sector'),
+        ('camphub', '0001_initial'),
     ]
 
     operations = [
