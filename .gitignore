@@ -12,5 +12,6 @@ Auth
 __pycache__/
 *.pyc
 backend/db.sqlite3
+backend/static/
 
 

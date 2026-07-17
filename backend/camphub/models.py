@@ -88,6 +88,9 @@ class GymEvent(models.Model):
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
 
+    def __str__(self):
+        return f"{self.get_gender_display()} Gym ({self.event_id})"
+
 
 class Instructor(models.Model):
     STATUS_TYPE = [
@@ -161,11 +164,17 @@ class MealTime(models.Model):
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
 
+    def __str__(self):
+        return self.meal_name
+
 
 class BubbleEvent(models.Model):
     name = models.CharField(max_length=100)
     event_id = models.ForeignKey(
         Event, on_delete=models.CASCADE, null=True, blank=True, db_column='event_id')
+
+    def __str__(self):
+        return self.name
 
 
 
@@ -197,6 +206,10 @@ class Contact(models.Model):
 
     location = models.CharField(
         max_length=20, choices=LOCATION_CHOICES, null=True, blank=True)
+
+    def __str__(self):
+        return self.full_name
+
 
 class TVBooking(models.Model):
     user_id = models.ForeignKey(

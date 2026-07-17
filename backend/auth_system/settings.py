@@ -47,6 +47,7 @@ USE_X_FORWARDED_HOST = True
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,6 +61,78 @@ INSTALLED_APPS = [
     'corsheaders',
     'camphub',
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "UniSpace Admin",
+    "site_header": "UniSpace",
+    "site_brand": "UniSpace",
+    "welcome_sign": "",
+    "copyright": "UniSpace",
+    "show_ui_builder": False,
+    "navigation_expanded": False,
+    "show_sidebar": True,
+    "related_modal_active": True,
+    "changeform_format": "single",
+
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index"},
+    ],
+
+    "order_with_respect_to": [
+        "accounts",
+        "camphub",
+        "camphub.Event",
+        "camphub.ClassEvent",
+        "camphub.GymEvent",
+        "camphub.MealTime",
+        "camphub.BubbleEvent",
+        "camphub.Cohort",
+        "camphub.StudyYear",
+        "camphub.Subject",
+        "camphub.Instructor",
+        "camphub.Room",
+        "camphub.TVBooking",
+        "camphub.Reminder",
+        "camphub.Contact",
+    ],
+
+    "icons": {
+        "accounts.UserAccount": "fas fa-user",
+        "camphub.Event": "fas fa-calendar-day",
+        "camphub.ClassEvent": "fas fa-chalkboard-teacher",
+        "camphub.GymEvent": "fas fa-dumbbell",
+        "camphub.MealTime": "fas fa-utensils",
+        "camphub.BubbleEvent": "fas fa-comment-dots",
+        "camphub.Cohort": "fas fa-users",
+        "camphub.StudyYear": "fas fa-graduation-cap",
+        "camphub.Subject": "fas fa-book",
+        "camphub.Instructor": "fas fa-chalkboard-user",
+        "camphub.Room": "fas fa-door-open",
+        "camphub.TVBooking": "fas fa-tv",
+        "camphub.Reminder": "fas fa-bell",
+        "camphub.Contact": "fas fa-address-book",
+    },
+    "default_icon_parents": "fas fa-folder",
+    "default_icon_children": "fas fa-circle",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",
+    "dark_mode_theme": None,
+    "no_navbar_border": True,
+    "navbar_fixed": True,
+    "sidebar_nav_flat_style": True,
+    "sidebar_fixed": True,
+    "footer_fixed": False,
+    "button_classes": {
+        "primary": "btn-outline-primary",
+        "secondary": "btn-outline-secondary",
+        "info": "btn-outline-info",
+        "warning": "btn-outline-warning",
+        "danger": "btn-outline-danger",
+        "success": "btn-outline-success",
+    },
+}
 
 SITE_ID = 1
 
