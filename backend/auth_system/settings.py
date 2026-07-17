@@ -306,3 +306,27 @@ STATICFILES_DIRS = []
 _build_static = os.path.join(BASE_DIR, 'build/static')
 if os.path.exists(_build_static):
     STATICFILES_DIRS.append(_build_static)
+
+# Django's default logging only prints request errors to console when DEBUG=True
+# (mail_admins is the only DEBUG=False handler, and ADMINS is empty) -- without
+# this, unhandled exceptions vanish silently in production.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
