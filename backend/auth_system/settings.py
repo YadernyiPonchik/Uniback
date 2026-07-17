@@ -259,7 +259,10 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # Not the Manifest variant: Jazzmin's base.html references a bare
+        # "vendor/bootswatch" static path (a JS prefix, not a real file),
+        # which trips ManifestStaticFilesStorage's strict manifest lookup.
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
